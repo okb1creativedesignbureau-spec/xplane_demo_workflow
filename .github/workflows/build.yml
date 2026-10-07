@@ -8,14 +8,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip gcc build-essential
-
-      - name: Download and Extract Official X-Plane SDK
+      - name: Fetch SDK Headers
         run: |
-          mkdir -p SDK
-          curl -sSL "https://developer.x-plane.com/wp-content/plugins/code-sample-generation/sample_templates/XPSDK303.zip" -o sdk.zip
-          unzip -q sdk.zip -d SDK/
+          mkdir -p SDK/CHeaders/XPLM
+          mkdir -p SDK/CHeaders/Widgets
+          git clone --depth 1 https://github.com/X-Plane/XPLM.git SDK/CHeaders/XPLM
+          git clone --depth 1 https://github.com/X-Plane/Widgets.git SDK/CHeaders/Widgets
 
       - name: Build lin.xpl
         run: |
@@ -23,13 +21,16 @@ jobs:
           SRC=$(find . -maxdepth 2 -name "demo_popup.c" | head -n 1)
           
           if [ -z "$SRC" ]; then
-            echo "ERROR: demo_popup.c not found in repository root!"
+            echo "ERROR: demo_popup.c not found in repository!"
             exit 1
           fi
 
           gcc -shared -fPIC -O2 -o 64/lin.xpl "$SRC" \
-            -ISDK/SDK/CHeaders/XPLM \
-            -DAPL=0 -DIBM=0 -DLIN=1 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
+            -ISDK/CHeaders -ISDK/CHeaders/XPLM -ISDK/CHeaders/Widgets \
+            -DAPL=0 -DIBM=0 -DLIN=1 -DXPLM200=1 -DXPLM210=1 -DXPLM300=1 -fvisibility=hidden
+
+          # Check binary output
+          ls -l 64/lin.xpl
 
       - uses: actions/upload-artifact@v4
         with:
@@ -41,11 +42,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download and Extract Official X-Plane SDK
+      - name: Fetch SDK Headers
         run: |
-          mkdir -p SDK
-          curl -sSL "https://developer.x-plane.com/wp-content/plugins/code-sample-generation/sample_templates/XPSDK303.zip" -o sdk.zip
-          unzip -q sdk.zip -d SDK/
+          mkdir -p SDK/CHeaders/XPLM
+          mkdir -p SDK/CHeaders/Widgets
+          git clone --depth 1 https://github.com/X-Plane/XPLM.git SDK/CHeaders/XPLM
+          git clone --depth 1 https://github.com/X-Plane/Widgets.git SDK/CHeaders/Widgets
 
       - name: Build mac.xpl (Universal Binary)
         run: |
@@ -53,13 +55,16 @@ jobs:
           SRC=$(find . -maxdepth 2 -name "demo_popup.c" | head -n 1)
 
           if [ -z "$SRC" ]; then
-            echo "ERROR: demo_popup.c not found in repository root!"
+            echo "ERROR: demo_popup.c not found in repository!"
             exit 1
           fi
 
           clang -dynamiclib -O2 -arch x86_64 -arch arm64 -o 64/mac.xpl "$SRC" \
-            -ISDK/SDK/CHeaders/XPLM \
-            -DAPL=1 -DIBM=0 -DLIN=0 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
+            -ISDK/CHeaders -ISDK/CHeaders/XPLM -ISDK/CHeaders/Widgets \
+            -DAPL=1 -DIBM=0 -DLIN=0 -DXPLM200=1 -DXPLM210=1 -DXPLM300=1 -fvisibility=hidden
+
+          # Check binary output
+          ls -l 64/mac.xpl
 
       - uses: actions/upload-artifact@v4
         with:
