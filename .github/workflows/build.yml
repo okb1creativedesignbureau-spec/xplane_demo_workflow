@@ -8,16 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Build Tools
+      - name: Download X-Plane SDK Headers
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc build-essential
+          mkdir -p SDK/CHeaders/XPLM
+          git clone --depth 1 https://github.com/X-Plane/X-Plane-SDK.git SDK_REPO
+          cp -r SDK_REPO/CHeaders/* SDK/CHeaders/
 
       - name: Build lin.xpl
         run: |
           mkdir -p 64
           gcc -shared -fPIC -O2 -o 64/lin.xpl demo_popup.c \
-            -I./CHeaders -I./CHeaders/XPLM \
+            -ISDK/CHeaders -ISDK/CHeaders/XPLM \
             -DAPL=0 -DIBM=0 -DLIN=1 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
 
       - uses: actions/upload-artifact@v4
@@ -30,14 +31,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Download X-Plane SDK Headers
+        run: |
+          mkdir -p SDK/CHeaders/XPLM
+          git clone --depth 1 https://github.com/X-Plane/X-Plane-SDK.git SDK_REPO
+          cp -r SDK_REPO/CHeaders/* SDK/CHeaders/
+
       - name: Build mac.xpl (Universal Binary)
         run: |
           mkdir -p 64
           clang -dynamiclib -O2 -arch x86_64 -arch arm64 -o 64/mac.xpl demo_popup.c \
-            -I./CHeaders -I./CHeaders/XPLM \
-            -DAPL=1 -DIBM=0 -DLIN=0 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mac.xpl
-          path: 64/mac.xpl
+            -ISDK/CHeaders -ISDK/CHeaders/XPLM \
