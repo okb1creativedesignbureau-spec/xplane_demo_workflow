@@ -1,0 +1,32 @@
+name: Build X-Plane Plugins
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc-x86-64-linux-gnu
+      - name: Build lin.xpl
+        run: |
+          mkdir -p 64
+          gcc -shared -fPIC -O2 -o 64/lin.xpl demo_popup.c -I"./CHeaders/XPLM" -DAPL=0 -DIBM=0 -DLIN=1 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lin.xpl
+          path: 64/lin.xpl
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build mac.xpl (Universal Binary)
+        run: |
+          mkdir -p 64
+          clang -dynamiclib -O2 -arch x86_64 -arch arm64 -o 64/mac.xpl demo_popup.c -I"./CHeaders/XPLM" -DAPL=1 -DIBM=0 -DLIN=0 -DXPLM200=1 -DXPLM210=1 -fvisibility=hidden
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac.xpl
+          path: 64/mac.xpl
