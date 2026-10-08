@@ -5,11 +5,19 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef IBM
-#define IBM 1
-#endif
-#ifndef XPLM200
-#define XPLM200 1
+/* Windows-specific entry point */
+#if defined(_WIN32) || defined(IBM)
+#include <windows.h>
+BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    switch (ul_reason_for_call) {
+        case DLL_PROCESS_ATTACH:
+        case DLL_THREAD_ATTACH:
+        case DLL_THREAD_DETACH:
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+    return TRUE;
+}
 #endif
 
 static XPLMWindowID g_window = NULL;
