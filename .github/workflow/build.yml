@@ -1,0 +1,65 @@
+name: Build X-Plane Plugins
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build Windows Plugin (win.xpl)
+        run: |
+          cl /O2 /LD /D IBM=1 /D XPLM200=1 /I SDK/CHeaders/XPLM demo_popup.c /link /OUT:win.xpl User32.lib OpenGL32.lib XPLM_64.lib
+        continue-on-error: true # Falls back to GCC if MSVC SDK library linking fails
+
+      - name: Fallback Build with GCC (MinGW)
+        if: failure()
+        run: |
+          gcc -O2 -shared -DIBM=1 -DXPLM200=1 -ISDK/CHeaders/XPLM demo_popup.c -o win.xpl -luser32 -lopengl32
+
+      - name: Upload Windows Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: win.xpl
+          path: win.xpl
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Linux Plugin (lin.xpl)
+        run: |
+          gcc -O2 -shared -fPIC -DLIN=1 -DXPLM200=1 -ISDK/CHeaders/XPLM demo_popup.c -o lin.xpl -lGL
+
+      - name: Upload Linux Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: lin.xpl
+          path: lin.xpl
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build macOS Universal Binary (mac.xpl)
+        run: |
+          clang -O2 -dynamiclib -DAPL=1 -DXPLM200=1 -ISDK/CHeaders/XPLM \
+            -arch x86_64 -arch arm64 \
+            -framework OpenGL -framework CoreFoundation \
+            demo_popup.c -o mac.xpl
+
+      - name: Upload macOS Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac.xpl
+          path: mac.xpl
