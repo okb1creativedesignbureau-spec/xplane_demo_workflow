@@ -10,15 +10,16 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Developer Command Prompt
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Build Windows Plugin (win.xpl)
         run: |
-          cl /O2 /LD /D IBM=1 /D XPLM200=1 /I SDK/CHeaders/XPLM demo_popup.c /link /OUT:win.xpl User32.lib OpenGL32.lib XPLM_64.lib
-        continue-on-error: true # Falls back to GCC if MSVC SDK library linking fails
+          cl /O2 /LD /D IBM=1 /D XPLM200=1 /I SDK/CHeaders/XPLM demo_popup.c /link /OUT:win.xpl User32.lib OpenGL32.lib
+        continue-on-error: true
 
       - name: Fallback Build with GCC (MinGW)
         if: failure()
@@ -34,7 +35,8 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build Linux Plugin (lin.xpl)
         run: |
@@ -49,7 +51,8 @@ jobs:
   build-mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Build macOS Universal Binary (mac.xpl)
         run: |
